@@ -24,6 +24,8 @@ class SnakeGame extends SurfaceView implements Runnable{
     private Thread mThread = null;
     // Control pausing between updates
     private long mNextFrameTime;
+    // Control how fast the game gets as you play
+    private long additionFrameSpeed=0;
     // Is the game currently playing and or paused?
     private volatile boolean mPlaying = false;
     private volatile boolean mPaused = true;
@@ -73,6 +75,8 @@ class SnakeGame extends SurfaceView implements Runnable{
 
         // Initialize the SoundPool
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //AudioSystem audioSystem= new AudioSystem(context, 1);
+
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -82,7 +86,10 @@ class SnakeGame extends SurfaceView implements Runnable{
                     .setMaxStreams(5)
                     .setAudioAttributes(audioAttributes)
                     .build();
+
+
         } else {
+            //AudioSystem audioSystem= new AudioSystem(context, 0);
             mSP = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
         }
         try {
@@ -144,6 +151,9 @@ class SnakeGame extends SurfaceView implements Runnable{
 
         // Setup mNextFrameTime so an update can triggered
         mNextFrameTime = System.currentTimeMillis();
+
+        // Reset the frame speed
+        additionFrameSpeed=0;
     }
 
 
@@ -166,8 +176,8 @@ class SnakeGame extends SurfaceView implements Runnable{
     // Check to see if it is time for an update
     public boolean updateRequired() {
 
-        // Run at 10 frames per second
-        final long TARGET_FPS = 10;
+        // Initiatially run at 10 frames per second
+        long TARGET_FPS = 10+additionFrameSpeed;
         // There are 1000 milliseconds in a second
         final long MILLIS_PER_SECOND = 1000;
 
@@ -178,7 +188,8 @@ class SnakeGame extends SurfaceView implements Runnable{
             // Setup when the next update will be triggered
             mNextFrameTime =System.currentTimeMillis()
                     + MILLIS_PER_SECOND / TARGET_FPS;
-
+            //increment the speed of the game
+            additionFrameSpeed+=2.5;
             // Return true so that the update and draw
             // methods are executed
             return true;
@@ -225,7 +236,7 @@ class SnakeGame extends SurfaceView implements Runnable{
         if (mSurfaceHolder.getSurface().isValid()) {
             mCanvas = mSurfaceHolder.lockCanvas();
 
-            Background backGround = new Background(Color.BLUE,Color.GREEN,mCanvas);
+            Background backGround = new Background(Color.YELLOW,Color.BLUE,mCanvas);
             backGround.draw();
 
             // Set the size and color of the mPaint for the text
@@ -241,8 +252,8 @@ class SnakeGame extends SurfaceView implements Runnable{
             // Draw the names in the top right
             mCreditBejan = new Credits(mPaintNames,"Bejan Maljai",mCanvas,790,100);
             mCreditTig = new Credits(mPaintNames,"Tiglath Eashoian",mCanvas,700,170);
-            mCreditBejan.draw();
-            mCreditTig.draw();
+            //   mCreditBejan.draw();
+
 
             mPauseButton.draw(mCanvas,mPaint);
 
@@ -297,9 +308,9 @@ class SnakeGame extends SurfaceView implements Runnable{
                     }
 
 
-                        // Don't want to process snake direction for this tap
-                        return true;
-                    }
+                    // Don't want to process snake direction for this tap
+                    return true;
+                }
 
                 // Let the Snake class handle the input
                 mSnake.switchHeading(motionEvent);
