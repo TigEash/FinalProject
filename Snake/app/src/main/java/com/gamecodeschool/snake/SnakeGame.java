@@ -75,7 +75,6 @@ class SnakeGame extends SurfaceView implements Runnable{
 
         // Initialize the SoundPool
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            //AudioSystem audioSystem= new AudioSystem(context, 1);
 
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -89,7 +88,6 @@ class SnakeGame extends SurfaceView implements Runnable{
 
 
         } else {
-            //AudioSystem audioSystem= new AudioSystem(context, 0);
             mSP = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
         }
         try {
@@ -189,7 +187,7 @@ class SnakeGame extends SurfaceView implements Runnable{
             mNextFrameTime =System.currentTimeMillis()
                     + MILLIS_PER_SECOND / TARGET_FPS;
             //increment the speed of the game
-            additionFrameSpeed+=2.5;
+            additionFrameSpeed+=0.5;
             // Return true so that the update and draw
             // methods are executed
             return true;
@@ -236,7 +234,7 @@ class SnakeGame extends SurfaceView implements Runnable{
         if (mSurfaceHolder.getSurface().isValid()) {
             mCanvas = mSurfaceHolder.lockCanvas();
 
-            Background backGround = new Background(Color.YELLOW,Color.BLUE,mCanvas);
+            Background backGround = new Background(Color.BLUE,Color.WHITE,mCanvas);
             backGround.draw();
 
             // Set the size and color of the mPaint for the text

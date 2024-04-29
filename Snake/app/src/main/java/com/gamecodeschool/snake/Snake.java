@@ -46,6 +46,7 @@ class Snake implements BitmapObject {
 
     Snake(Context context, Point mr, int ss) {
 
+        int health=1;
         // Initialize our ArrayList
         segmentLocations = new ArrayList<>();
 
