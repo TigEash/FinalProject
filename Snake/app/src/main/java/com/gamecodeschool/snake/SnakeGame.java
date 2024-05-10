@@ -187,7 +187,7 @@ class SnakeGame extends SurfaceView implements Runnable{
             mNextFrameTime =System.currentTimeMillis()
                     + MILLIS_PER_SECOND / TARGET_FPS;
             //increment the speed of the game
-            additionFrameSpeed+=0.5;
+            additionFrameSpeed=5*mScore;
             // Return true so that the update and draw
             // methods are executed
             return true;
