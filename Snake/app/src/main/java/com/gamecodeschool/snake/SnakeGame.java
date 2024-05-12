@@ -44,6 +44,8 @@ class SnakeGame extends SurfaceView implements Runnable{
 
     // How many points does the player have
     private int mScore;
+    // What is the current high score
+    private int highscore=0;
 
     // Objects for drawing
     private Canvas mCanvas;
@@ -222,6 +224,9 @@ class SnakeGame extends SurfaceView implements Runnable{
             mSP.play(mCrashID, 1, 1, 0, 0, 1);
             snakeDead=true;
             mPaused =true;
+            if(mScore>highscore){
+                highscore=mScore;
+            }
         }
 
     }
@@ -248,9 +253,7 @@ class SnakeGame extends SurfaceView implements Runnable{
             mScoreboard.draw();
 
             // Draw the High Score in the top right
-            TestHighScore = new Credits(mPaintNames,"TestHighScore here",mCanvas,790,100);
-            mCreditTig = new Credits(mPaintNames,"Tiglath Eashoian",mCanvas,700,170);
-            //   mCreditBejan.draw();
+            TestHighScore = new Credits(mPaintNames,"High Score:"+Integer.toString(highscore),mCanvas,700,100);
             TestHighScore.draw();
 
             mPauseButton.draw(mCanvas,mPaint);
