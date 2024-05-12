@@ -57,7 +57,7 @@ class SnakeGame extends SurfaceView implements Runnable{
     private Apple mApple;
 
     private Scoreboard mScoreboard;
-    private com.gamecodeschool.snake.Credits mCreditBejan;
+    private com.gamecodeschool.snake.Credits TestHighScore;
     private com.gamecodeschool.snake.Credits mCreditTig;
 
 
@@ -247,11 +247,11 @@ class SnakeGame extends SurfaceView implements Runnable{
             mScoreboard = new Scoreboard(mPaint,mScore,mCanvas,20,120);
             mScoreboard.draw();
 
-            // Draw the names in the top right
-            mCreditBejan = new Credits(mPaintNames,"Bejan Maljai",mCanvas,790,100);
+            // Draw the High Score in the top right
+            TestHighScore = new Credits(mPaintNames,"TestHighScore here",mCanvas,790,100);
             mCreditTig = new Credits(mPaintNames,"Tiglath Eashoian",mCanvas,700,170);
             //   mCreditBejan.draw();
-
+            TestHighScore.draw();
 
             mPauseButton.draw(mCanvas,mPaint);
 
