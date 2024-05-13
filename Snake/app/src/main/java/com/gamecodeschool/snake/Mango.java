@@ -9,18 +9,18 @@ import android.graphics.Point;
 
 import java.util.Random;
 
-public class Apple implements Fruit {
+public class Mango implements Fruit {
     private Point location = new Point();
     private Point mSpawnRange;
     private int mSize;
-    private Bitmap mBitmapApple;
+    private Bitmap mBitmapMango;
 
-    public Apple(Context context, Point sr, int s) {
+    public Mango(Context context, Point sr, int s) {
         mSpawnRange = sr;
         mSize = s;
         location.x = -10; // Initially off-screen
-        mBitmapApple = BitmapFactory.decodeResource(context.getResources(), R.drawable.apple);
-        mBitmapApple = Bitmap.createScaledBitmap(mBitmapApple, s, s, false);
+        mBitmapMango = BitmapFactory.decodeResource(context.getResources(), R.drawable.mango);
+        mBitmapMango = Bitmap.createScaledBitmap(mBitmapMango, s, s, false);
     }
 
     @Override
@@ -37,6 +37,7 @@ public class Apple implements Fruit {
 
     @Override
     public void draw(Canvas canvas, Paint paint) {
-        canvas.drawBitmap(mBitmapApple, location.x * mSize, location.y * mSize, paint);
+        canvas.drawBitmap(mBitmapMango, location.x * mSize, location.y * mSize, paint);
     }
 }
+

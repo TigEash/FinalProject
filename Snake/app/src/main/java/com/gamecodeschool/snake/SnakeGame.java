@@ -10,13 +10,15 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.io.IOException;
-import android.graphics.Rect;
-import android.graphics.LinearGradient;
-import android.graphics.Shader;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 class SnakeGame extends SurfaceView implements Runnable{
 
@@ -24,6 +26,8 @@ class SnakeGame extends SurfaceView implements Runnable{
     private Thread mThread = null;
     // Control pausing between updates
     private long mNextFrameTime;
+    // Control how fast the game gets as you play
+    private long additionFrameSpeed=0;
     // Is the game currently playing and or paused?
     private volatile boolean mPlaying = false;
     private volatile boolean mPaused = true;
@@ -42,6 +46,8 @@ class SnakeGame extends SurfaceView implements Runnable{
 
     // How many points does the player have
     private int mScore;
+    // What is the current high score
+    private int highscore=0;
 
     // Objects for drawing
     private Canvas mCanvas;
@@ -51,12 +57,23 @@ class SnakeGame extends SurfaceView implements Runnable{
 
     // A snake ssss
     private Snake mSnake;
-    // And an apple
-    private Apple mApple;
+
+
+    // Create fruit factory
+    private FruitFactory mFruitFactory;
+    private Fruit mFruit;
+    // Used to alternate between apple and banana
+    // list of fruits
+    private final List<String> fruitTypes = Arrays.asList("Apple", "Grapes", "Banana", "Mango");
+    private int currentFruitIndex = 0;
+
 
     private Scoreboard mScoreboard;
-    private com.gamecodeschool.snake.Credits mCreditBejan;
+    private com.gamecodeschool.snake.Credits TestHighScore;
     private com.gamecodeschool.snake.Credits mCreditTig;
+
+
+    private long TARGET_FPS;
 
 
     private PauseButton mPauseButton;
@@ -73,6 +90,7 @@ class SnakeGame extends SurfaceView implements Runnable{
 
         // Initialize the SoundPool
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -82,6 +100,8 @@ class SnakeGame extends SurfaceView implements Runnable{
                     .setMaxStreams(5)
                     .setAudioAttributes(audioAttributes)
                     .build();
+
+
         } else {
             mSP = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
         }
@@ -105,15 +125,7 @@ class SnakeGame extends SurfaceView implements Runnable{
         mPaint = new Paint();
         mPaintNames = new Paint();
 
-
-
-
-
-        // Call the constructors of our two game objects
-        mApple = new Apple(context,
-                new Point(NUM_BLOCKS_WIDE,
-                        mNumBlocksHigh),
-                blockSize);
+        mFruitFactory = new ConcreteFruitFactory(context, new Point(NUM_BLOCKS_WIDE, mNumBlocksHigh), blockSize);
 
         mSnake = new Snake(context,
                 new Point(NUM_BLOCKS_WIDE,
@@ -131,20 +143,23 @@ class SnakeGame extends SurfaceView implements Runnable{
 
     // Called to start a new game
     public void newGame() {
-
-        // reset the snake
+        // Reset the snake
         mSnake.reset(NUM_BLOCKS_WIDE, mNumBlocksHigh);
-        snakeDead=false;
+        snakeDead = false;
 
-        // Get the apple ready for dinner
-        mApple.spawn();
-
-        // Reset the mScore
+        // Reset the score and the additional frame speed
         mScore = 0;
+        additionFrameSpeed = 0;
+        updateGameSpeed();  // Update the game speed based on the reset conditions
 
-        // Setup mNextFrameTime so an update can triggered
+        // Spawn the initial fruit
+        mFruit = mFruitFactory.createFruit("Apple");
+        mFruit.spawn();
+
+        // Setup mNextFrameTime so an update can be triggered
         mNextFrameTime = System.currentTimeMillis();
     }
+
 
 
     // Handles the game loop
@@ -164,23 +179,38 @@ class SnakeGame extends SurfaceView implements Runnable{
 
 
     // Check to see if it is time for an update
-    public boolean updateRequired() {
+//    public boolean updateRequired() {
+//
+//        // Initially run at 10 frames per second
+//        TARGET_FPS = 10+additionFrameSpeed;
+//        // There are 1000 milliseconds in a second
+//        final long MILLIS_PER_SECOND = 1000;
+//
+//        // Are we due to update the frame
+//        if(mNextFrameTime <= System.currentTimeMillis()){
+//            // Tenth of a second has passed
+//
+//            // Setup when the next update will be triggered
+//            mNextFrameTime =System.currentTimeMillis()
+//                    + MILLIS_PER_SECOND / TARGET_FPS;
+//            //increment the speed of the game
+//            additionFrameSpeed=5*mScore;
+//            // Return true so that the update and draw
+//            // methods are executed
+//            return true;
+//        }
+//
+//        return false;
+//    }
 
-        // Run at 10 frames per second
-        final long TARGET_FPS = 10;
-        // There are 1000 milliseconds in a second
+    public boolean updateRequired() {
         final long MILLIS_PER_SECOND = 1000;
 
-        // Are we due to update the frame
-        if(mNextFrameTime <= System.currentTimeMillis()){
-            // Tenth of a second has passed
+        if (TARGET_FPS <= 0) TARGET_FPS = 10;  // Ensure never dividing by zero
+        final long frameTime = MILLIS_PER_SECOND / TARGET_FPS;
 
-            // Setup when the next update will be triggered
-            mNextFrameTime =System.currentTimeMillis()
-                    + MILLIS_PER_SECOND / TARGET_FPS;
-
-            // Return true so that the update and draw
-            // methods are executed
+        if (mNextFrameTime <= System.currentTimeMillis()) {
+            mNextFrameTime = System.currentTimeMillis() + frameTime;
             return true;
         }
 
@@ -188,34 +218,72 @@ class SnakeGame extends SurfaceView implements Runnable{
     }
 
 
+    private void updateGameSpeed() {
+        TARGET_FPS = 10 + additionFrameSpeed;  // Base FPS plus speed increment
+        long frameTime = 1000 / TARGET_FPS;
+        mNextFrameTime = System.currentTimeMillis() + frameTime;
+    }
+
+
+    private void activateIceCubePowerUp() {
+        final long originalFPS = TARGET_FPS;
+        TARGET_FPS = Math.max(5, TARGET_FPS / 2);  // Halve the FPS, but not lower than 5
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+            TARGET_FPS = originalFPS; // Restore the original FPS after 15 seconds
+            mNextFrameTime = System.currentTimeMillis() + 1000 / TARGET_FPS;  // Recalculate next frame time
+        }, 15000);
+    }
+
+
+
+
+
+
     // Update all the game objects
     public void update() {
-
-        // Move the snake
         mSnake.move();
 
-        // Did the head of the snake eat the apple?
-        if(mSnake.checkDinner(mApple.getLocation())){
-            // This reminds me of Edge of Tomorrow.
-            // One day the apple will be ready!
-            mApple.spawn();
+        // Check if the snake has eaten the fruit
+        if (mSnake.checkDinner(mFruit.getLocation())) {
+            // Increase the score for every fruit eaten
+            mScore++;
 
-            // Add to  mScore
-            mScore = mScore + 1;
-
-            // Play a sound
+            // Play sound effect for eating a fruit
             mSP.play(mEat_ID, 1, 1, 0, 0, 1);
+
+            // Check the type of the fruit eaten
+            if (mFruit instanceof IceCube) {
+                // Activate slow down only if the fruit eaten is an IceCube
+                activateIceCubePowerUp();
+            } else {
+                // Increase the game speed for all fruits except IceCube
+                additionFrameSpeed += 5;
+                updateGameSpeed();  // Call a method to update game speed based on current additionFrameSpeed
+            }
+
+            // Decide what fruit to spawn next
+            if (new Random().nextInt(10) < 2) {  // Approximately 20% chance to spawn an Ice Cube
+                mFruit = mFruitFactory.createFruit("ice-cube");
+            } else {
+                currentFruitIndex = (currentFruitIndex + 1) % fruitTypes.size();
+                mFruit = mFruitFactory.createFruit(fruitTypes.get(currentFruitIndex));
+            }
+            mFruit.spawn();  // Spawn the selected fruit
         }
 
-        // Did the snake die?
+        // Check for snake death
         if (mSnake.detectDeath()) {
-            // Pause the game ready to start again
             mSP.play(mCrashID, 1, 1, 0, 0, 1);
-            snakeDead=true;
-            mPaused =true;
+            snakeDead = true;
+            mPaused = true;
+            if (mScore > highscore) {
+                highscore = mScore;
+            }
         }
-
     }
+
 
 
 
@@ -225,7 +293,7 @@ class SnakeGame extends SurfaceView implements Runnable{
         if (mSurfaceHolder.getSurface().isValid()) {
             mCanvas = mSurfaceHolder.lockCanvas();
 
-            Background backGround = new Background(Color.BLUE,Color.GREEN,mCanvas);
+            Background backGround = new Background(Color.BLUE,Color.WHITE,mCanvas);
             backGround.draw();
 
             // Set the size and color of the mPaint for the text
@@ -238,16 +306,16 @@ class SnakeGame extends SurfaceView implements Runnable{
             mScoreboard = new Scoreboard(mPaint,mScore,mCanvas,20,120);
             mScoreboard.draw();
 
-            // Draw the names in the top right
-            mCreditBejan = new Credits(mPaintNames,"Bejan Maljai",mCanvas,790,100);
-            mCreditTig = new Credits(mPaintNames,"Tiglath Eashoian",mCanvas,700,170);
-            mCreditBejan.draw();
-            mCreditTig.draw();
+            // Draw the High Score in the top right
+            TestHighScore = new Credits(mPaintNames,"High Score:"+Integer.toString(highscore),mCanvas,700,100);
+            TestHighScore.draw();
 
             mPauseButton.draw(mCanvas,mPaint);
 
-            // Draw the apple and the snake
-            mApple.draw(mCanvas, mPaint);
+            if (mFruit != null) {  // Check if mFruit is not null
+                mFruit.draw(mCanvas, mPaint);
+            }
+
             mSnake.draw(mCanvas, mPaint);
 
             // Draw some text while paused
@@ -297,9 +365,9 @@ class SnakeGame extends SurfaceView implements Runnable{
                     }
 
 
-                        // Don't want to process snake direction for this tap
-                        return true;
-                    }
+                    // Don't want to process snake direction for this tap
+                    return true;
+                }
 
                 // Let the Snake class handle the input
                 mSnake.switchHeading(motionEvent);
