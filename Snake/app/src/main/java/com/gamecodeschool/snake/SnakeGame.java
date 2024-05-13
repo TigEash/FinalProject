@@ -332,7 +332,7 @@ class SnakeGame extends SurfaceView implements Runnable{
         if (mSurfaceHolder.getSurface().isValid()) {
             mCanvas = mSurfaceHolder.lockCanvas();
 
-            Background backGround = new Background(Color.LTGRAY,Color.LTGRAY,mCanvas);
+            Background backGround = new Background(Color.DKGRAY,Color.DKGRAY,mCanvas);
             backGround.draw();
 
             // Set the size and color of the mPaint for the text
