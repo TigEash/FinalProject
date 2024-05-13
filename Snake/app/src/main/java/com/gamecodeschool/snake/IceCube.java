@@ -9,20 +9,20 @@ import android.graphics.Point;
 
 import java.util.Random;
 
-public class Apple implements Fruit {
+public class IceCube implements Fruit {
     private Point location = new Point();
     private Point mSpawnRange;
     private int mSize;
-    private Bitmap mBitmapApple;
+    private Bitmap mBitmapIce;
 
-    public Apple(Context context, Point sr, int s) {
+    public IceCube(Context context, Point sr, int s) {
         mSpawnRange = sr;
         mSize = s;
         location.x = -10; // Initially off-screen
-        mBitmapApple = BitmapFactory.decodeResource(context.getResources(), R.drawable.apple);
-        mBitmapApple = Bitmap.createScaledBitmap(mBitmapApple, s, s, false);
+        mBitmapIce = BitmapFactory.decodeResource(context.getResources(), R.drawable.icecube);
+        mBitmapIce = Bitmap.createScaledBitmap(mBitmapIce, s, s, false);
     }
-
+    // random comment
     @Override
     public void spawn() {
         Random random = new Random();
@@ -37,6 +37,7 @@ public class Apple implements Fruit {
 
     @Override
     public void draw(Canvas canvas, Paint paint) {
-        canvas.drawBitmap(mBitmapApple, location.x * mSize, location.y * mSize, paint);
+        canvas.drawBitmap(mBitmapIce, location.x * mSize, location.y * mSize, paint);
     }
 }
+
