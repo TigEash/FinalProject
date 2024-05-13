@@ -15,7 +15,11 @@ import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -73,8 +77,16 @@ class SnakeGame extends SurfaceView implements Runnable{
     private com.gamecodeschool.snake.Credits mCreditTig;
 
 
-    private long TARGET_FPS;
+    //Current Player
+    Player currentPlayer;
+    // Get the File for writing scores to
+    File pathDirectory;
+    String pathDirectoryAsString;
+    //How many players have played so far
+    private int playerCount=0;
 
+
+    private long TARGET_FPS;
 
     private PauseButton mPauseButton;
 
@@ -83,6 +95,8 @@ class SnakeGame extends SurfaceView implements Runnable{
     public SnakeGame(Context context, Point size) {
         super(context);
 
+        pathDirectory=context.getFilesDir();
+        pathDirectoryAsString= String.valueOf(pathDirectory);
         // Work out how many pixels each block is
         int blockSize = size.x / NUM_BLOCKS_WIDE;
         // How many blocks of the same size will fit into the height
@@ -156,8 +170,16 @@ class SnakeGame extends SurfaceView implements Runnable{
         mFruit = mFruitFactory.createFruit("Apple");
         mFruit.spawn();
 
+
+        // Reset the frame speed
+        additionFrameSpeed=0;
+
+        //Increment the player count
+        playerCount++;
+
         // Setup mNextFrameTime so an update can be triggered
         mNextFrameTime = System.currentTimeMillis();
+
     }
 
 
@@ -276,10 +298,27 @@ class SnakeGame extends SurfaceView implements Runnable{
         // Check for snake death
         if (mSnake.detectDeath()) {
             mSP.play(mCrashID, 1, 1, 0, 0, 1);
-            snakeDead = true;
-            mPaused = true;
-            if (mScore > highscore) {
-                highscore = mScore;
+            snakeDead=true;
+            mPaused =true;
+            if(mScore>highscore){
+                highscore=mScore;
+            }
+            boolean append;
+            if (playerCount<=1){
+                append = false;
+            }
+            else{
+                append = true;
+            }
+            // Create the current player
+            currentPlayer=new Player("Player"+Integer.toString(playerCount),mScore);
+
+            // attempt to write the player and their score to a file
+            try (FileWriter scoreWriter = new FileWriter(pathDirectoryAsString+"/scores.txt", append)) {
+                scoreWriter.write(currentPlayer.format());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+
             }
         }
     }
