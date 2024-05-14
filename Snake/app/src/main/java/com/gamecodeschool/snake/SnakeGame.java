@@ -2,10 +2,13 @@ package com.gamecodeschool.snake;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -26,6 +29,8 @@ import java.util.Random;
 
 class SnakeGame extends SurfaceView implements Runnable{
 
+    // Background:
+    private Bitmap backgroundBitmap;
     // Objects for the game loop/thread
     private Thread mThread = null;
     // Control pausing between updates
@@ -43,6 +48,9 @@ class SnakeGame extends SurfaceView implements Runnable{
     private SoundPool mSP;
     private int mEat_ID = -1;
     private int mCrashID = -1;
+
+    // Custom font
+    private Typeface customFont;
 
     // The size in segments of the playable area
     private final int NUM_BLOCKS_WIDE = 40;
@@ -134,6 +142,8 @@ class SnakeGame extends SurfaceView implements Runnable{
             // Error
         }
 
+
+
         // Initialize the drawing objects
         mSurfaceHolder = getHolder();
         mPaint = new Paint();
@@ -145,6 +155,17 @@ class SnakeGame extends SurfaceView implements Runnable{
                 new Point(NUM_BLOCKS_WIDE,
                         mNumBlocksHigh),
                 blockSize);
+
+        // Load custom font
+        customFont = Typeface.createFromAsset(getContext().getAssets(), "Fonts/BungeeSpice-Regular.ttf");
+        // Apply font to paint object
+        mPaint.setTypeface(customFont);
+
+
+        // Load the background image
+        backgroundBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.game_background);
+        // Optionally, scale the bitmap to fit the screen
+        backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmap, size.x, size.y, false);
 
         mPauseButton= new PauseButton(context,
                 new Point(NUM_BLOCKS_WIDE,
@@ -325,59 +346,103 @@ class SnakeGame extends SurfaceView implements Runnable{
 
 
 
-
-    // Do all the drawing
     public void draw() {
-        // Get a lock on the mCanvas
         if (mSurfaceHolder.getSurface().isValid()) {
             mCanvas = mSurfaceHolder.lockCanvas();
 
-            Background backGround = new Background(Color.DKGRAY,Color.DKGRAY,mCanvas);
-            backGround.draw();
+            // Clear the canvas, set background, or draw the game's background
+            mCanvas.drawBitmap(backgroundBitmap, 0, 0, null);
 
-            // Set the size and color of the mPaint for the text
+            // Set the paint for scores
             mPaint.setColor(Color.argb(255, 255, 255, 255));
-            mPaint.setTextSize(120);
+            mPaint.setTextSize(60); // Set this size as per your design needs
 
-            mPaintNames.setColor(Color.argb(255, 255, 255, 255));
-            mPaintNames.setTextSize(45);
+            // Draw the current score aligned to the right
+            String scoreText = "Score: " + mScore;
+            float scoreWidth = mPaint.measureText(scoreText);
+            mCanvas.drawText(scoreText, mCanvas.getWidth() - scoreWidth - 20, 100, mPaint);
 
-            mScoreboard = new Scoreboard(mPaint,mScore,mCanvas,20,120);
-            mScoreboard.draw();
+            // Draw the high score right below the current score, also aligned to the right
+            String highScoreText = "High Score: " + highscore;
+            float highScoreWidth = mPaint.measureText(highScoreText);
+            mCanvas.drawText(highScoreText, mCanvas.getWidth() - highScoreWidth - 20, 160, mPaint);
 
-            // Draw the High Score in the top right
-            TestHighScore = new Credits(mPaintNames,"High Score:"+Integer.toString(highscore),mCanvas,700,100);
-            TestHighScore.draw();
-
-            mPauseButton.draw(mCanvas,mPaint);
-
-            if (mFruit != null) {  // Check if mFruit is not null
+            // Draw other game elements (fruits, snake, etc.)
+            if (mFruit != null) {
                 mFruit.draw(mCanvas, mPaint);
             }
-
             mSnake.draw(mCanvas, mPaint);
 
-            // Draw some text while paused
-            if(snakeDead){
+            // Ensure the pause button is also visible
+            if (mPauseButton != null) {
+                mPauseButton.draw(mCanvas, mPaint);
+            }
 
-                // Set the size and color of the mPaint for the text
-                mPaint.setColor(Color.argb(255, 255, 255, 255));
-                mPaint.setTextSize(120);
-
-                // Draw the message
-                // We will give this an international upgrade soon
-                //mCanvas.drawText("Tap To Play!", 200, 700, mPaint);
+            // Game over message, if needed
+            if (snakeDead) {
                 mCanvas.drawText(getResources().getString(R.string.tap_to_play), 200, 700, mPaint);
             }
 
-
-            // Unlock the mCanvas and reveal the graphics for this frame
+            // Unlock and post the draw
             mSurfaceHolder.unlockCanvasAndPost(mCanvas);
         }
     }
 
-    @Override
 
+
+    // Do all the drawing
+//    public void draw() {
+//        // Get a lock on the mCanvas
+//        if (mSurfaceHolder.getSurface().isValid()) {
+//            mCanvas = mSurfaceHolder.lockCanvas();
+//
+//            Background backGround = new Background(Color.DKGRAY,Color.DKGRAY,mCanvas);
+//            backGround.draw();
+//
+//            mCanvas.drawBitmap(backgroundBitmap, 0, 0, null);
+//
+//            // Set the size and color of the mPaint for the text
+//            mPaint.setColor(Color.argb(255, 255, 255, 255));
+//            mPaint.setTextSize(120);
+//
+//            mPaintNames.setColor(Color.argb(255, 255, 255, 255));
+//            mPaintNames.setTextSize(45);
+//
+//            mScoreboard = new Scoreboard(mPaint,mScore,mCanvas,20,120);
+//            mScoreboard.draw();
+//
+//            // Draw the High Score in the top right
+//            TestHighScore = new Credits(mPaintNames,"High Score:"+Integer.toString(highscore),mCanvas,700,100);
+//            TestHighScore.draw();
+//
+//            mPauseButton.draw(mCanvas,mPaint);
+//
+//            if (mFruit != null) {  // Check if mFruit is not null
+//                mFruit.draw(mCanvas, mPaint);
+//            }
+//
+//            mSnake.draw(mCanvas, mPaint);
+//
+//            // Draw some text while paused
+//            if(snakeDead){
+//
+//                // Set the size and color of the mPaint for the text
+//                mPaint.setColor(Color.argb(255, 255, 255, 255));
+//                mPaint.setTextSize(120);
+//
+//                // Draw the message
+//                // We will give this an international upgrade soon
+//                //mCanvas.drawText("Tap To Play!", 200, 700, mPaint);
+//                mCanvas.drawText(getResources().getString(R.string.tap_to_play), 200, 700, mPaint);
+//            }
+//
+//
+//            // Unlock the mCanvas and reveal the graphics for this frame
+//            mSurfaceHolder.unlockCanvasAndPost(mCanvas);
+//        }
+//    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent motionEvent) {
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
 
